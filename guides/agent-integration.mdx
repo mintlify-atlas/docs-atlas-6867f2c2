@@ -1,0 +1,174 @@
+---
+title: "Agent integration"
+description: "How Monocle connects to Claude Code, OpenCode, Codex CLI, and Gemini CLI — registration, socket pairing, and session management."
+keywords: ["agent", "claude", "opencode", "codex", "gemini", "register", "MCP", "skills", "integration"]
+---
+
+Monocle communicates with agents over a Unix socket. Agents use skills — `SKILL.md` files that instruct the agent to call `monocle review` CLI commands — to check review status, retrieve feedback, and submit content for review.
+
+## Registering Monocle
+
+Run `monocle register` to install skills and any required config for your agent:
+
+```bash
+monocle register            # interactive picker — select one or more agents
+monocle register claude     # register a specific agent
+monocle register --global   # write to user-level config (available across all projects)
+```
+
+Accepted agent names: `claude`, `opencode`, `codex`, `gemini`, `all`.
+
+Use `--global` to register once and have Monocle available in every project without re-running per repo.
+
+### What registration writes
+
+<Tabs>
+  <Tab title="Claude Code">
+    `monocle register claude` writes three things:
+
+    - **`.claude/skills/`** — Installs the `get-feedback`, `get-feedback-wait`, `review-plan`, and `review-plan-wait` skill files.
+    - **`.mcp.json`** — Adds a `monocle` entry under `mcpServers` pointing to `monocle serve-mcp-channel`. This enables MCP channel push notifications.
+    - **`.claude/settings.json`** — Adds permission entries so Claude Code doesn't prompt for approval when running `monocle review` commands.
+
+    With `--global`, the same files are written to `~/.claude/` and `~/.mcp.json` instead.
+  </Tab>
+  <Tab title="OpenCode">
+    `monocle register opencode` writes:
+
+    - **`.opencode/skills/`** — Installs the skill files.
+    - **`opencode.json`** — Adds `"monocle *": "allow"` under `permission.bash` so OpenCode doesn't prompt when running `monocle review` commands.
+
+    With `--global`, skills go to `~/.config/opencode/skills/` and the config update targets `~/.config/opencode/opencode.json`.
+  </Tab>
+  <Tab title="Codex CLI">
+    `monocle register codex` writes:
+
+    - **`.codex/skills/`** — Installs the skill files.
+    - **`.codex/rules/monocle.rules`** — Adds a prefix rule that allows `monocle` commands without a permission prompt.
+
+    With `--global`, skills go to `~/.codex/skills/` and the rules file to `~/.codex/rules/monocle.rules`.
+  </Tab>
+  <Tab title="Gemini CLI">
+    `monocle register gemini` writes:
+
+    - **`.gemini/skills/`** — Installs the skill files.
+    - **`.gemini/policies/monocle.toml`** — Adds a policy that allows `monocle` shell commands without prompting.
+
+    With `--global`, skills go to `~/.gemini/skills/` and the policy file to `~/.gemini/policies/monocle.toml`.
+  </Tab>
+</Tabs>
+
+## Alternative: agent plugin systems
+
+Instead of `monocle register`, you can install Monocle through each agent's built-in plugin or extension system:
+
+<Tabs>
+  <Tab title="Claude Code">
+    ```
+    /plugin marketplace add josephschmitt/monocle
+    /plugin install monocle@monocle
+    ```
+  </Tab>
+  <Tab title="Codex CLI">
+    ```
+    /plugins
+    ```
+
+    Search for "monocle" and install.
+  </Tab>
+  <Tab title="Gemini CLI">
+    ```bash
+    gemini extensions install josephschmitt/monocle
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+  OpenCode does not have a plugin marketplace. Use `monocle register opencode` to install.
+</Note>
+
+## Claude Code: MCP channels for push notifications
+
+Claude Code supports [MCP channels](https://code.claude.com/docs/en/channels-reference), which let Monocle push feedback directly into the agent's context the moment you submit a review. To enable channels, start Claude Code with the channels flag:
+
+```bash
+claude --dangerously-load-development-channels plugin:monocle@monocle
+```
+
+<Warning>
+  The `--dangerously-load-development-channels` flag is required during the [channels research preview](https://code.claude.com/docs/en/channels-reference). Without it, the agent still receives feedback — it retrieves it on the next `/get-feedback` call instead of immediately.
+</Warning>
+
+<Tip>
+  If you start or restart Monocle while Claude Code is already running, the MCP channel may need to reconnect. Type `/mcp` in Claude Code and select Monocle to reconnect.
+</Tip>
+
+## Socket pairing
+
+Monocle starts a Unix socket server when it launches. Agent CLI commands (`monocle review status`, `get-feedback`, etc.) connect to that socket to communicate with the running session.
+
+Monocle auto-pairs by matching working directories. If the agent runs in the same directory as Monocle, pairing happens automatically.
+
+If auto-pairing fails — for example, if the agent's working directory differs from Monocle's — you can set the socket path manually:
+
+```bash
+# Override the socket when starting Monocle
+monocle --socket /tmp/monocle-abc123.sock
+
+# Override for agent-facing commands
+MONOCLE_SOCKET=/tmp/monocle-abc123.sock monocle review status
+
+# Override in .mcp.json for Claude Code
+# Add MONOCLE_SOCKET to the env block of the monocle mcpServers entry
+```
+
+Press **`I`** in the TUI to see the current socket path and the number of connected subscribers.
+
+## Session modes
+
+By default, `monocle` starts a new review session. You can control session behavior with these flags:
+
+| Flag | Behavior |
+|---|---|
+| _(none)_ | Start a new session |
+| `--continue` | Resume the most recent session |
+| `--resume` | Open an interactive picker to choose a session |
+| `--session ID` | Resume a specific session by ID |
+
+Sessions are persisted via SQLite, so your reviews and comments survive restarts.
+
+## Unregistering
+
+To remove Monocle's configuration for an agent:
+
+```bash
+monocle unregister            # interactive picker
+monocle unregister claude     # remove a specific agent
+monocle unregister --global   # remove from user-level config
+```
+
+This removes skill files, the MCP config entry (for Claude Code), and any permission entries written during registration.
+
+## Installed skills
+
+Registration installs four skills for all supported agents:
+
+| Skill | Description |
+|---|---|
+| `/get-feedback` | Retrieve pending review feedback from the queue |
+| `/get-feedback-wait` | Retrieve feedback, blocking until it's available |
+| `/review-plan` | Find the active plan file and submit it for review (non-blocking) |
+| `/review-plan-wait` | Submit the plan and block until you approve or request changes |
+
+See [Plan and architecture review](/guides/plan-review) for details on the plan skills.
+
+---
+
+<CardGroup cols={2}>
+  <Card title="The review loop" icon="arrows-rotate" href="/guides/review-loop">
+    How feedback flows from diff to agent fix.
+  </Card>
+  <Card title="Configuration" icon="sliders" href="/guides/configuration">
+    Customize layout, diff style, keybindings, and more.
+  </Card>
+</CardGroup>

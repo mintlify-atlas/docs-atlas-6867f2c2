@@ -1,0 +1,105 @@
+---
+title: "The review loop"
+description: "How the full review cycle works end-to-end — from diff to comment to feedback to fix."
+keywords: ["review", "loop", "feedback", "submit", "pause", "comments", "workflow"]
+---
+
+Monocle's review loop lets you inspect agent-written diffs, leave structured comments, and deliver feedback — all without interrupting the agent's work. This page explains the full cycle.
+
+## How diffs reach you
+
+When your agent writes or modifies files, Monocle detects the changes and shows them in the sidebar immediately. You don't need to wait for the agent to finish — diffs appear as each file is written.
+
+Monocle supports two feedback delivery modes depending on your agent:
+
+**Push mode (Claude Code with MCP channels):** When you submit a review, Monocle pushes a notification directly into Claude Code's context. The agent retrieves your feedback immediately without any manual trigger.
+
+**Pull mode (all agents):** Your review is queued on submit. The agent retrieves it the next time it runs the `/get-feedback` skill or calls `monocle review get-feedback` directly. Multiple reviews accumulate and are delivered together in one batch.
+
+Both modes are reliable. Push is an optimization — feedback is always queued regardless.
+
+## The full cycle
+
+<Steps>
+  <Step title="Agent writes code">
+    Your agent writes files. Monocle detects the changes and populates the sidebar with the modified files. Changed files appear in real time — no refresh needed.
+  </Step>
+
+  <Step title="You navigate and comment">
+    Navigate files with `j`/`k`. Select a file to open its diff. Press **`c`** at any line to open the comment editor, or press **`v`** to enter visual mode and select a range before commenting.
+
+    In the comment editor, press **`Tab`** to cycle the comment type: **issue**, **suggestion**, **note**, or **praise**. Press **`Enter`** to save the comment. Press **`s`** to pre-fill a GitHub-style suggestion block with the current line's content.
+
+    Press **`Ctrl+g`** inside the comment editor to open the text in your `$VISUAL` or `$EDITOR` for full editing power. Save and quit to bring the text back into the modal.
+  </Step>
+
+  <Step title="You submit the review">
+    Press **`S`** (or run `:submit`) to open the submit modal. Monocle formats all your comments into a structured review and queues it for delivery.
+
+    - If there are no comments, the review is treated as an **approval**.
+    - All file reviewed states reset on submit.
+    - Toggle the **Copy to clipboard** checkbox in the modal (with **`Shift+Tab`**) to also copy the formatted review to your clipboard when submitting.
+    - Press **`Ctrl+y`** instead to copy the formatted review to your clipboard _without_ submitting, then close the modal.
+  </Step>
+
+  <Step title="Agent retrieves feedback">
+    With Claude Code channels, a push notification prompts the agent to run `/get-feedback` immediately. With other agents, the review waits in the queue until the agent polls via the `/get-feedback` skill or `monocle review get-feedback`.
+
+    If multiple reviews accumulated while the agent was working, they are all delivered together in one response.
+  </Step>
+
+  <Step title="Agent fixes and you see updated diffs">
+    The agent addresses your comments and writes updated files. The diffs in Monocle update automatically. Review the changes, leave new comments if needed, and submit another round. Iterate until you're satisfied.
+  </Step>
+</Steps>
+
+## Pause flow
+
+If you want the agent to stop and wait before continuing, press **`P`** (or run `:pause`). This sends a pause notification to the agent. The agent blocks on `monocle review get-feedback --wait` until you submit your review.
+
+<Note>
+  Pause requires MCP channel support. Currently only Claude Code supports push notifications, so pause flow is Claude Code-only.
+</Note>
+
+Use pause when you need to review before the agent moves on — for example, before a large refactor or when you want to redirect the agent's approach.
+
+## Tracking reviewed files
+
+Mark a file as reviewed by pressing **`r`** while it's selected. Monocle auto-advances to the next unreviewed file. Use **`/`** to cycle the sidebar filter:
+
+- **All** — show every changed file
+- **Unreviewed** — show only files not yet marked reviewed
+- **Reviewed** — show only files marked reviewed
+
+All reviewed states reset when you submit. You can also run `:mark-all-reviewed` or `:mark-all-unreviewed` from the command mode.
+
+## Feedback queue
+
+Reviews accumulate in the queue while your agent works. When the agent pulls, it receives all pending reviews combined. You don't need to wait for the agent to be idle before submitting — submit as often as you like and the agent handles them in batch.
+
+## Connection status
+
+Press **`I`** to display the current socket path and how many subscribers (agents) are connected. If auto-pairing fails because the agent's working directory differs from Monocle's, you can override the socket path:
+
+```bash
+# Override when starting Monocle
+monocle --socket /tmp/monocle-abc123.sock
+
+# Override for agent-facing commands
+MONOCLE_SOCKET=/tmp/monocle-abc123.sock monocle review status
+```
+
+## Submission history
+
+Run `:history` to view past review submissions from the current session. Reviews are persisted via SQLite and survive restarts.
+
+---
+
+<CardGroup cols={2}>
+  <Card title="Plan and architecture review" icon="file-lines" href="/guides/plan-review">
+    Review plans and decisions before the agent writes code.
+  </Card>
+  <Card title="Configuration" icon="sliders" href="/guides/configuration">
+    Customize layout, diff style, keybindings, and more.
+  </Card>
+</CardGroup>

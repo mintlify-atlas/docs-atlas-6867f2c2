@@ -1,0 +1,170 @@
+---
+title: "Keybindings"
+description: "Complete reference for all TUI keybindings, organized by category."
+keywords: ["keybindings", "keyboard shortcuts", "keys", "navigation", "comments", "review"]
+---
+
+Press **`?`** at any time in the TUI to open the help overlay, which dynamically reflects any custom bindings you've configured.
+
+## Navigation
+
+| Key | Action |
+|---|---|
+| **`j`** / **`k`** | Move cursor down / up |
+| **`J`** / **`K`** | Scroll diff down / up (from any pane) |
+| **`Ctrl+d`** / **`Ctrl+u`** | Scroll diff half a page down / up (from any pane) |
+| **`g`** / **`G`** | Jump to top / bottom |
+| **`h`** / **`l`** | Scroll diff left / right |
+| **`H`** / **`L`** | Scroll diff left / right (from any pane) |
+| **`0`** | Scroll to column 0 (from any pane) |
+| **`^`** | Scroll to first non-whitespace character (from any pane) |
+| **`$`** | Scroll to end of line (from any pane) |
+| **`[`** / **`]`** | Previous / next file (from any pane) |
+| **`{`** / **`}`** | Previous / next sidebar section (from any pane) |
+
+## Pane control
+
+| Key | Action |
+|---|---|
+| **`Enter`** | Focus the diff pane / toggle directory expansion |
+| **`Tab`** | Switch focus between panes |
+| **`\`** | Toggle sidebar visibility |
+| **`1`** / **`2`** | Jump directly to pane 1 (sidebar) or pane 2 (diff) |
+
+## View options
+
+| Key | Action |
+|---|---|
+| **`w`** | Toggle line wrapping (session only) |
+| **`f`** | Toggle flat / tree file list view (session only) |
+| **`z`** / **`e`** | Collapse / expand all directories (tree view) |
+| **`t`** | Cycle diff style: unified → split → file (from any pane, session only) |
+| **`T`** | Cycle layout: auto → side-by-side → stacked (session only) |
+| **`F`** | Toggle focus mode — hides the sidebar and enables line wrap |
+
+<Note>
+  Keys that change view settings (**`T`**, **`t`**, **`w`**, **`f`**) apply to the current session only. Edit your config file to persist preferences. See [Configuration](/guides/configuration).
+</Note>
+
+## Comments
+
+| Key | Action |
+|---|---|
+| **`c`** | Add a comment at the cursor line. If the cursor is on an existing comment, opens it for editing. |
+| **`s`** | Open the comment editor pre-filled with a GitHub-style `suggestion` block containing the current line. |
+| **`C`** | Add a file-level comment (not tied to a specific line). |
+| **`v`** | Enter visual selection mode to select a line range before commenting. |
+| **`x`** | Toggle the resolved state of the comment under the cursor. Resolved comments are excluded from submitted reviews. |
+| **`d`** | Delete the comment under the cursor. |
+
+## Review actions
+
+| Key | Action |
+|---|---|
+| **`r`** | Toggle the current file as reviewed. Auto-advances to the next unreviewed file. |
+| **`/`** | Cycle the sidebar filter: all → unreviewed → reviewed. |
+| **`S`** / **`:submit`** | Submit your review. Formats all comments and queues them for delivery. |
+| **`P`** / **`:pause`** | Send a pause notification to the agent. The agent blocks until you submit your review. Requires MCP channel support (Claude Code only). |
+| **`D`** / **`:clear`** | Clear the review — removes all comments, plans, and reviewed states. |
+| **`b`** | Open the ref picker to change the base commit or branch for comparison. |
+| **`R`** | Force-reload all files from disk. |
+
+## Session commands
+
+Run these in command mode (type **`:`** to enter it):
+
+| Command | Action |
+|---|---|
+| **`:submit`** | Submit your review (same as **`S`**). |
+| **`:pause`** | Pause the agent (same as **`P`**). |
+| **`:clear`** | Clear the review (same as **`D`**). |
+| **`:history`** | View past review submissions from the current session. |
+| **`:mark-all-reviewed`** | Mark every file in the sidebar as reviewed. |
+| **`:mark-all-unreviewed`** | Mark every file in the sidebar as unreviewed. |
+| **`:discard`** | Discard all pending (unsaved) comments. |
+
+## Info and clipboard
+
+| Key | Action |
+|---|---|
+| **`I`** | Show connection info: current socket path and subscriber count. |
+| **`?`** | Open the help overlay. Reflects your custom keybindings. |
+| **`Ctrl+g`** | Open the current comment or submit text in your `$VISUAL` / `$EDITOR`. Save and quit to bring the text back. |
+| **`Ctrl+y`** | In the submit modal, copy the formatted review to your clipboard without submitting. |
+
+---
+
+## Comment editor keybindings
+
+The comment editor uses standard Emacs-style shortcuts.
+
+### Cursor movement
+
+| Key | Action |
+|---|---|
+| **`←`** / **`→`** or **`Ctrl+B`** / **`Ctrl+F`** | Move cursor left / right |
+| **`↑`** / **`↓`** or **`Ctrl+P`** / **`Ctrl+N`** | Move cursor up / down (multiline) |
+| **`Home`** / **`Ctrl+A`** | Jump to first non-whitespace, then to start of line |
+| **`End`** / **`Ctrl+E`** | Jump to end of line |
+
+### Word movement
+
+| Key | Action |
+|---|---|
+| **`Alt+←`** or **`Alt+B`** | Move back one word |
+| **`Alt+→`** or **`Alt+F`** | Move forward one word |
+
+### Delete and kill
+
+| Key | Action |
+|---|---|
+| **`Ctrl+D`** or **`Delete`** | Delete character at cursor |
+| **`Ctrl+K`** | Kill to end of line |
+| **`Ctrl+U`** | Kill to start of line |
+| **`Ctrl+W`** or **`Alt+Backspace`** | Delete word before cursor |
+| **`Alt+D`** | Delete word after cursor |
+
+### Editor actions
+
+| Key | Action |
+|---|---|
+| **`Shift+Enter`** or **`Alt+Enter`** | Insert a newline |
+| **`Ctrl+G`** | Open the comment text in your `$VISUAL` / `$EDITOR` |
+| **`Tab`** | Cycle the comment type: issue → suggestion → note → praise |
+| **`Enter`** | Save the comment |
+| **`Esc`** | Cancel and discard changes |
+
+---
+
+## Custom keybindings
+
+You can override any action key in your config file. Map the action name to a new key string:
+
+```json
+{
+  "keybindings": {
+    "quit": "Q",
+    "submit": "ctrl+s",
+    "scroll_down": "ctrl+j"
+  }
+}
+```
+
+The **`?`** help overlay dynamically reflects your custom bindings.
+
+<Note>
+  Modal keys — **Enter**, **Esc**, and **Tab** inside overlays — are not configurable. Comment editor keybindings are also fixed.
+</Note>
+
+For the full list of configurable action names, see the [Configuration reference](/reference/configuration#custom-keybindings).
+
+---
+
+<CardGroup cols={2}>
+  <Card title="Configuration reference" icon="sliders" href="/reference/configuration">
+    Full config schema including all action names for custom keybindings.
+  </Card>
+  <Card title="The review loop" icon="arrows-rotate" href="/guides/review-loop">
+    How to use keybindings in a full review workflow.
+  </Card>
+</CardGroup>

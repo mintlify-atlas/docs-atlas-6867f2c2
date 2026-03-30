@@ -1,80 +1,95 @@
 ---
 title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+description: "Register Monocle with your agent and start your first review session in minutes."
 ---
 
-## Get started in three steps
+<Steps>
+  <Step title="Install Monocle">
+    Install via Homebrew (recommended) or see [other installation methods](/installation).
 
-Get your documentation site running locally and make your first customization.
+    ```bash
+    brew install josephschmitt/tap/monocle
+    ```
 
-### Step 1: Set up your local environment
+    Verify the installation:
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+    ```bash
+    monocle --version
+    ```
+  </Step>
 
-### Step 2: Deploy your changes
+  <Step title="Register with your agent">
+    Run `monocle register` to install skills into your agent's config directory. With no argument, an interactive picker lets you choose which agents to register.
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    ```bash
+    monocle register          # interactive picker
+    monocle register claude   # or: opencode, codex, gemini, all
+    ```
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+    This writes skill files into the agent-specific directory and, for Claude Code, also installs the MCP channel config for push notifications:
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+    | Agent | Skills directory | MCP config |
+    |-------|-----------------|------------|
+    | Claude Code | `.claude/skills/` | `.mcp.json` |
+    | OpenCode | `.opencode/skills/` | — |
+    | Codex CLI | `.codex/skills/` | — |
+    | Gemini CLI | `.gemini/skills/` | — |
 
-### Step 3: Go live
+    Use `--global` to write to the user-level config directory instead of the current project.
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+    ```bash
+    monocle register claude --global
+    ```
+  </Step>
+
+  <Step title="Start a review session">
+    Run your agent in one terminal, then start Monocle in another:
+
+    ```bash
+    monocle
+    ```
+
+    Monocle connects to your agent via a Unix socket, automatically pairing based on working directory. Diffs appear in the TUI as the agent writes code.
+
+    <Note>
+      **Claude Code with push notifications:** Start Claude Code with the channels flag so feedback is pushed directly into the agent's context the moment you submit:
+
+      ```bash
+      claude --dangerously-load-development-channels plugin:monocle@monocle
+      ```
+
+      The `--dangerously-load-development-channels` flag is required during the channels research preview. If you restart Monocle while Claude Code is already running, type `/mcp` in Claude Code and select Monocle to reconnect.
+    </Note>
+  </Step>
+
+  <Step title="Leave comments and submit">
+    Navigate diffs with `j`/`k` and add a comment with `c`. Use `v` to select a range of lines before commenting. Choose a comment type (`Tab` cycles through issue, suggestion, note, praise) and press `Enter` to save.
+
+    When you're done reviewing, press `S` to submit. Your review is formatted and queued for delivery:
+    - **Claude Code with channels:** a push notification delivers feedback immediately
+    - **All other agents:** feedback waits in the queue until the agent runs `/get-feedback`
+
+    If you submit with no comments, the review is treated as an approval.
+
+    <Tip>
+      Press `?` at any time to see all available keybindings, or see the full [keybindings reference](/reference/keybindings).
+    </Tip>
+  </Step>
+</Steps>
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
-
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Review loop" icon="arrows-rotate" href="/guides/review-loop">
+    Learn the full review cycle: pause flow, feedback queue, file tracking, and submission history
+  </Card>
+  <Card title="Plan review" icon="list-check" href="/guides/plan-review">
+    Have your agent submit plans and architecture decisions for review before writing code
+  </Card>
+  <Card title="Agent integration" icon="plug" href="/guides/agent-integration">
+    Configure Claude Code push notifications, socket pairing, and session modes
+  </Card>
+  <Card title="Keybindings" icon="keyboard" href="/reference/keybindings">
+    Full reference for all TUI and comment editor keybindings
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

@@ -1,0 +1,113 @@
+---
+title: "Plan and architecture review"
+description: "Review your agent's plans, architecture decisions, and summaries before it writes code — with iterative approval and markdown rendering."
+keywords: ["plan", "architecture", "review", "artifact", "focus mode", "markdown", "review-plan", "review-plan-wait"]
+---
+
+Monocle isn't limited to reviewing file diffs. Your agent can submit plans, architecture decisions, summaries, and any other content for you to review before it writes code. Plans appear in the sidebar alongside file changes, and you leave line-level comments on them the same way.
+
+## How to trigger a plan review
+
+There are two ways to send a plan to Monocle:
+
+**From the agent — automatically or on demand:** The agent uses the `/review-plan` or `/review-plan-wait` skill. You can also invoke these skills yourself from within a conversation at any time.
+
+**From the CLI — manually:** Run `monocle review send-artifact` directly. Useful for sending arbitrary content without going through the agent:
+
+```bash
+monocle review send-artifact \
+  --title "Refactor plan" \
+  --file plan.md \
+  --id plan.md \
+  --type md
+```
+
+The `--id` flag ensures that subsequent submissions replace the previous version rather than creating a new entry.
+
+## The two plan skills
+
+<Tabs>
+  <Tab title="/review-plan">
+    Finds the active plan file and submits it to Monocle for review. **Does not block** — the agent continues working while you review.
+
+    Use this when you want visibility into the agent's plan without gating its progress. The plan appears in Monocle's sidebar and you can leave comments, which the agent retrieves on its next `/get-feedback` call.
+
+    To invoke it from within a conversation, ask your agent:
+
+    ```
+    /review-plan
+    ```
+
+    Or provide a path:
+
+    ```
+    /review-plan path/to/plan.md
+    ```
+  </Tab>
+  <Tab title="/review-plan-wait">
+    Finds the active plan file, submits it to Monocle, and **blocks until you respond**. The agent will not continue until you submit a review.
+
+    - If you submit with no comments, the agent treats the review as an approval and continues.
+    - If you request changes, the agent updates the plan and resubmits — iterating until you approve.
+
+    Use this in plan mode or any time you want the agent to wait for explicit approval before proceeding.
+
+    ```
+    /review-plan-wait
+    ```
+
+    Under the hood, this calls `monocle review send-artifact --wait`, which blocks until the reviewer submits feedback through the TUI.
+  </Tab>
+</Tabs>
+
+## Iterating on plans
+
+When the agent resubmits an updated plan, Monocle shows a **diff between plan versions** so you can see exactly what changed. This makes it easy to verify that the agent addressed your feedback without re-reading the entire plan.
+
+Each resubmission with the same `--id` replaces the previous version. Monocle tracks the history and renders the delta.
+
+## Focus mode
+
+Plans can be long. Press **`F`** to toggle focus mode, which hides the sidebar and enables line wrapping for distraction-free reading. Press **`F`** again to return to the normal layout.
+
+You can enable focus mode automatically whenever a plan is being reviewed by setting `auto_focus_mode` in your config:
+
+```json
+{
+  "auto_focus_mode": true
+}
+```
+
+See [Configuration](/guides/configuration) for details on where to put this file.
+
+## Markdown rendering
+
+Plans and changed `.md` files render with full markdown styling — headings, bold, italic, lists, and code blocks are all displayed with formatting. You're not reading raw markup.
+
+## Automatic plan review
+
+By default, your agent decides on its own whether to submit plans. To make it submit plans automatically, add instructions to your project's agent configuration file (e.g. `CLAUDE.md`, `AGENTS.md`):
+
+````markdown
+## Monocle Integration
+
+When Monocle is running:
+- Use the `/review-plan` skill to send content (plans, decisions, summaries) for the reviewer to see
+- Use the content's filename as the identifier so updates replace the previous version
+- In plan mode, use `/review-plan-wait` instead — it blocks until the reviewer responds. If they request changes, update and resubmit until approved.
+````
+
+<Note>
+  Monocle's skills are available to your agent, but the agent decides when to use them on its own. The instructions above tell the agent to use them automatically whenever Monocle is running.
+</Note>
+
+---
+
+<CardGroup cols={2}>
+  <Card title="The review loop" icon="arrows-rotate" href="/guides/review-loop">
+    How the full review cycle works end-to-end.
+  </Card>
+  <Card title="Agent integration" icon="plug" href="/guides/agent-integration">
+    Register Monocle with Claude Code, OpenCode, Codex CLI, or Gemini CLI.
+  </Card>
+</CardGroup>

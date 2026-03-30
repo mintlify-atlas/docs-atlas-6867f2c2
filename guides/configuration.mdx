@@ -1,0 +1,168 @@
+---
+title: "Configuration"
+description: "Configure Monocle's layout, diff style, keybindings, and review format with global and project-level JSON config files."
+keywords: ["configuration", "config", "keybindings", "layout", "diff style", "settings", "json"]
+---
+
+Monocle reads configuration from JSON files. Settings in the project config override the global config.
+
+## Config file locations
+
+| Scope | Path |
+|---|---|
+| Global | `~/.config/monocle/config.json` (or `$XDG_CONFIG_HOME/monocle/config.json`) |
+| Project | `.monocle/config.json` in the working directory |
+
+Create either file — Monocle loads both if they exist, with project settings taking precedence over global ones.
+
+## Full example
+
+```json
+{
+  "layout": "auto",
+  "diff_style": "unified",
+  "sidebar_style": "flat",
+  "wrap": false,
+  "tab_size": 4,
+  "context_lines": 3,
+  "ignore_patterns": [],
+  "min_diff_width": 80,
+  "mouse": true,
+  "auto_focus_mode": false,
+  "keybindings": {},
+  "review_format": {
+    "include_snippets": true,
+    "max_snippet_lines": 10,
+    "include_summary": true
+  }
+}
+```
+
+## Settings reference
+
+### Layout and display
+
+<ParamField path="layout" type="string" default="auto">
+  Pane arrangement. `"auto"` switches between side-by-side and stacked based on terminal width. Use `"side-by-side"` or `"stacked"` to fix the layout regardless of terminal size.
+
+  Valid values: `"auto"`, `"side-by-side"`, `"stacked"`
+</ParamField>
+
+<ParamField path="diff_style" type="string" default="unified">
+  Diff display mode. `"unified"` shows additions and deletions in a single column. `"split"` shows old and new side by side. `"file"` shows the raw file content without diff markers.
+
+  Valid values: `"unified"`, `"split"`, `"file"`
+</ParamField>
+
+<ParamField path="sidebar_style" type="string" default="flat">
+  File list display mode. `"flat"` lists all files in a single flat list. `"tree"` groups files into a collapsible directory tree.
+
+  Valid values: `"flat"`, `"tree"`
+</ParamField>
+
+<ParamField path="wrap" type="boolean" default="false">
+  Word-wrap long lines in diffs. When `false`, long lines scroll horizontally with `h`/`l`.
+</ParamField>
+
+<ParamField path="min_diff_width" type="integer" default="80">
+  Minimum character width for the diff viewer in side-by-side layout. If the terminal is narrower than this value, Monocle switches to stacked layout automatically.
+</ParamField>
+
+### Diff behavior
+
+<ParamField path="tab_size" type="integer" default="4">
+  Number of spaces to use when rendering tab characters in diffs.
+</ParamField>
+
+<ParamField path="context_lines" type="integer" default="3">
+  Number of unchanged lines shown above and below each diff hunk. Increase this to see more surrounding context.
+</ParamField>
+
+<ParamField path="ignore_patterns" type="string[]" default="[]">
+  Glob patterns for files to exclude from the diff view. Files matching any pattern are hidden from the sidebar and not shown in diffs.
+
+  Example:
+  ```json
+  {
+    "ignore_patterns": ["*.lock", "dist/**", "node_modules/**"]
+  }
+  ```
+</ParamField>
+
+### Interface
+
+<ParamField path="mouse" type="boolean" default="true">
+  Enable mouse interactions. When `true`, you can click to focus panes, scroll with the wheel, click files in the sidebar to select them, and drag to make visual selections.
+</ParamField>
+
+<ParamField path="auto_focus_mode" type="boolean" default="false">
+  Automatically enter focus mode when reviewing plans or artifacts. Focus mode hides the sidebar and enables line wrapping for distraction-free reading. Equivalent to pressing **`F`** manually each time a plan opens.
+</ParamField>
+
+### Review format
+
+These settings control how your review is formatted when you submit.
+
+<ParamField path="review_format.include_snippets" type="boolean" default="true">
+  Include code snippets from the diff in the formatted review text delivered to the agent. Snippets provide context so the agent knows exactly which lines each comment refers to.
+</ParamField>
+
+<ParamField path="review_format.max_snippet_lines" type="integer" default="10">
+  Truncate code snippets longer than this number of lines. Keeps review output concise for large hunks.
+</ParamField>
+
+<ParamField path="review_format.include_summary" type="boolean" default="true">
+  Include a comment count summary at the top of the formatted review (e.g., "2 issues, 1 suggestion").
+</ParamField>
+
+### Keybindings
+
+<ParamField path="keybindings" type="object" default="{}">
+  Map of action names to key strings. Override any default keybinding by adding an entry here. The **`?`** help overlay in the TUI dynamically reflects your custom bindings.
+
+  Example:
+  ```json
+  {
+    "keybindings": {
+      "quit": "Q",
+      "submit": "ctrl+s",
+      "scroll_down": "ctrl+j"
+    }
+  }
+  ```
+</ParamField>
+
+## Custom keybindings
+
+Override any action key by mapping the action name to a new key string in `keybindings`:
+
+```json
+{
+  "keybindings": {
+    "quit": "Q",
+    "submit": "ctrl+s",
+    "scroll_down": "ctrl+j"
+  }
+}
+```
+
+### Available action names
+
+`up`, `down`, `top`, `bottom`, `half_up`, `half_down`, `prev_file`, `next_file`, `select`, `focus_swap`, `toggle_sidebar`, `scroll_down`, `scroll_up`, `scroll_left`, `scroll_right`, `scroll_home`, `scroll_first_char`, `scroll_end`, `wrap`, `toggle_diff`, `tree_mode`, `collapse_all`, `expand_all`, `prev_section`, `next_section`, `comment`, `file_comment`, `suggest`, `visual`, `reviewed`, `submit`, `pause`, `dismiss_outdated`, `base_ref`, `cycle_layout`, `refresh`, `help`, `quit`, `command_mode`
+
+<Note>
+  Toggle keybindings — **`T`** (cycle layout), **`t`** (cycle diff style), **`w`** (toggle wrap), and **`f`** (toggle flat/tree view) — change settings for the current session only. Edit the config file to persist your preferences across sessions.
+
+  Modal keys (Enter, Esc, Tab inside overlays) are not configurable.
+</Note>
+
+---
+
+<CardGroup cols={2}>
+  <Card title="The review loop" icon="arrows-rotate" href="/guides/review-loop">
+    How the full review cycle works end-to-end.
+  </Card>
+  <Card title="Agent integration" icon="plug" href="/guides/agent-integration">
+    Register Monocle with your agent and manage sessions.
+  </Card>
+</CardGroup>

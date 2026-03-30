@@ -1,97 +1,82 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Monocle"
+description: "Review your AI agent's code as it writes it. Leave comments on diffs, submit structured feedback, and watch the agent fix things in real time — all from your terminal."
 ---
 
-## Setting up
+Monocle is a terminal UI that runs alongside your AI coding agent. You review diffs in real time as the agent writes code, leave line-level comments — issues, suggestions, notes — and submit a structured review in one batch. The agent receives your feedback and starts fixing things immediately, just like a PR review but live.
 
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install Monocle via Homebrew, pre-built binaries, or from source
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Register Monocle with your agent and start your first review session
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Review Loop" icon="arrows-rotate" href="/guides/review-loop">
+    Understand how the live review cycle works end-to-end
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="CLI Reference" icon="terminal" href="/reference/cli">
+    Complete reference for all Monocle commands and flags
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## How it works
 
-Everything you need to create world-class documentation.
+Monocle connects to your AI coding agent using Unix sockets. You run Monocle in a separate terminal while your agent works. As the agent writes code, you see diffs appear in real time, leave line-level comments, and submit your review when you're ready. The agent retrieves your feedback and starts addressing it — you review the updated diffs, iterate, and ship.
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+<Steps>
+  <Step title="Install Monocle">
+    Install via Homebrew or download a pre-built binary for your platform.
+    ```bash
+    brew install josephschmitt/tap/monocle
+    ```
+  </Step>
+  <Step title="Register with your agent">
+    Run `monocle register` to install skills into your agent's config directory. This works with Claude Code, OpenCode, Codex CLI, and Gemini CLI.
+    ```bash
+    monocle register          # interactive picker
+    monocle register claude   # or: opencode, codex, gemini, all
+    ```
+  </Step>
+  <Step title="Start reviewing">
+    Launch your agent in one terminal, then start Monocle in another. Diffs appear automatically as the agent writes code.
+    ```bash
+    monocle
+    ```
+  </Step>
+  <Step title="Submit feedback">
+    Navigate diffs with `j`/`k`, add comments with `c`, and press `S` to submit your review. The agent receives your feedback and starts fixing things.
+  </Step>
+</Steps>
 
-## Need inspiration?
+## Key features
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<CardGroup cols={2}>
+  <Card title="Live diff viewer" icon="code-compare">
+    Unified and split (side-by-side) views with syntax highlighting and intra-line diffs. Switch styles with `t`.
+  </Card>
+  <Card title="Structured comments" icon="comments">
+    Tag feedback as issues, suggestions, notes, or praise. Add line-level or file-level comments with visual range selection.
+  </Card>
+  <Card title="Plan review" icon="list-check">
+    Review your agent's plans and architecture decisions before it writes code. Block the agent until you approve with `/review-plan-wait`.
+  </Card>
+  <Card title="Push notifications" icon="bell">
+    With Claude Code channels, feedback is pushed directly into the agent's context the moment you submit — no polling needed.
+  </Card>
+  <Card title="Suggested edits" icon="pen">
+    Propose exact code changes with GitHub-style suggestion blocks that the agent can apply directly.
+  </Card>
+  <Card title="Session persistence" icon="database">
+    Reviews survive restarts via SQLite. View past submission history with `:history`.
+  </Card>
+</CardGroup>
+
+## Supported agents
+
+Monocle works with any coding agent that supports [agent skills](https://agentskills.io), including:
+
+- **Claude Code** — Full support including push notifications via MCP channels
+- **OpenCode** — Pull-based feedback via skills
+- **Codex CLI** — Pull-based feedback via skills
+- **Gemini CLI** — Pull-based feedback via skills

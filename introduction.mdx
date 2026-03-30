@@ -1,0 +1,72 @@
+---
+title: "Introduction"
+description: "Monocle is a terminal UI for reviewing AI agent-written code in real time — leave line-level comments, submit structured feedback, and watch the agent fix things immediately."
+---
+
+## What is Monocle?
+
+Monocle is a TUI that runs alongside your AI coding agent. As the agent writes code, diffs appear in your terminal in real time. You navigate the changes, leave line-level comments — issues, suggestions, notes, praise — and submit a structured review in one batch. The agent receives your feedback and starts addressing it immediately, just like a pull request review but live.
+
+## The problem it solves
+
+Without a tool like Monocle, reviewing agent-written code means rubber-stamping diffs you didn't read, copy-pasting feedback into a chat window, or hoping the agent got it right the first time. There's no way to say "fix these three issues and show me again."
+
+Monocle gives you a proper review loop without slowing the agent down. It doesn't gate each file change behind an approval — your agent keeps working while you review at your own pace. When you're ready, submit your comments. The agent receives your feedback, addresses it, and you review the updated diffs. Iterate until it's right.
+
+## How it fits into your workflow
+
+Monocle runs in a separate terminal while your agent works in another. The two communicate over a Unix socket — Monocle starts a socket server, and your agent connects to it via skills (standardized `SKILL.md` files that tell the agent how to call the `monocle review` CLI commands).
+
+You don't need to pause your agent to review. The agent keeps writing; you review at your own pace. When you submit, the agent picks up your feedback and continues.
+
+## The review model
+
+How your agent learns about submitted feedback depends on the integration:
+
+**Push-based (Claude Code only):** Claude Code supports [MCP channels](https://code.claude.com/docs/en/channels-reference), which let Monocle push a notification directly into the agent's context the moment you submit. The agent runs `/get-feedback` immediately to retrieve the full review — no polling required.
+
+**Pull-based (all agents):** Agents without channel support poll for feedback by running the `/get-feedback` skill or calling `monocle review get-feedback` directly. Multiple reviews accumulate in the queue and are delivered together when the agent next pulls.
+
+Both models are reliable. Feedback is always queued — push notifications are an optimization, not a dependency.
+
+## Supported agents
+
+| Agent | Registration name | Feedback model |
+|---|---|---|
+| [Claude Code](https://claude.com/claude-code) | `claude` | Push (MCP channel) + pull |
+| [OpenCode](https://opencode.ai) | `opencode` | Pull via skills |
+| [Codex CLI](https://github.com/openai/codex) | `codex` | Pull via skills |
+| [Gemini CLI](https://github.com/google/gemini-cli) | `gemini` | Pull via skills |
+
+Any agent that supports [agent skills](https://agentskills.io) or can call CLI commands can use Monocle.
+
+## Architecture overview
+
+```
+┌─────────────┐                ┌───────────────┐              ┌──────────┐
+│   Agent     │<--stdio/MCP--->│  channel.ts   │<---socket--->│ monocle  │
+│             │                │ (MCP server)  │              │  (TUI)   │
+└─────────────┘                └───────────────┘              └──────────┘
+```
+
+- **TUI** — The terminal interface you interact with. Renders diffs, collects comments, and manages review submissions.
+- **Unix socket** — The communication channel between Monocle and agent CLI commands (`monocle review status`, `get-feedback`, `send-artifact`).
+- **MCP channel** — A slim stdio MCP server (`channel.ts`) that handles Claude Code push notifications. It forwards events like `feedback_submitted` and `pause_requested` directly into Claude's context.
+- **Skills** — `SKILL.md` files installed by `monocle register` that teach agents how to call the `monocle review` CLI commands.
+
+## Where to go next
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install Monocle via Homebrew, pre-built binaries, or from source.
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Register Monocle with your agent and start your first review session.
+  </Card>
+  <Card title="Review loop" icon="arrows-rotate" href="/guides/review-loop">
+    Understand the full review cycle from diff to fix.
+  </Card>
+  <Card title="CLI reference" icon="terminal" href="/reference/cli">
+    Complete reference for all Monocle commands and flags.
+  </Card>
+</CardGroup>

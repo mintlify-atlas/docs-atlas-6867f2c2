@@ -1,0 +1,172 @@
+---
+title: "Configuration reference"
+description: "Complete reference for all Monocle configuration options, file locations, and environment variables."
+---
+
+## Config file locations
+
+Monocle loads configuration from two locations in order — the project-level file overrides global settings:
+
+1. **Global:** `~/.config/monocle/config.json` (or `$XDG_CONFIG_HOME/monocle/config.json`)
+2. **Project:** `.monocle/config.json` in your working directory
+
+## Full example
+
+```json .monocle/config.json
+{
+  "layout": "auto",
+  "diff_style": "unified",
+  "sidebar_style": "flat",
+  "wrap": false,
+  "tab_size": 4,
+  "context_lines": 3,
+  "ignore_patterns": [],
+  "min_diff_width": 80,
+  "mouse": true,
+  "auto_focus_mode": false,
+  "keybindings": {},
+  "review_format": {
+    "include_snippets": true,
+    "max_snippet_lines": 10,
+    "include_summary": true
+  }
+}
+```
+
+## Options
+
+<ParamField body="layout" type="string" default="auto">
+  Pane arrangement. `"auto"` switches between side-by-side and stacked based on terminal width. `"side-by-side"` always uses the split view. `"stacked"` always stacks panes vertically.
+</ParamField>
+
+<ParamField body="diff_style" type="string" default="unified">
+  Diff display mode. `"unified"` shows a single unified diff. `"split"` shows a side-by-side diff. `"file"` shows raw file content.
+</ParamField>
+
+<ParamField body="sidebar_style" type="string" default="flat">
+  File list display mode. `"flat"` shows all files as a flat list. `"tree"` shows files in a collapsible directory tree.
+</ParamField>
+
+<ParamField body="wrap" type="boolean" default="false">
+  Word-wrap long lines in the diff viewer. Toggle for the current session with `w`.
+</ParamField>
+
+<ParamField body="tab_size" type="integer" default="4">
+  Number of spaces to render per tab character in diffs.
+</ParamField>
+
+<ParamField body="context_lines" type="integer" default="3">
+  Number of unchanged lines shown above and below each diff hunk.
+</ParamField>
+
+<ParamField body="ignore_patterns" type="string[]" default="[]">
+  Glob patterns for files to exclude from the diff view. For example: `["*.lock", "vendor/**"]`.
+</ParamField>
+
+<ParamField body="min_diff_width" type="integer" default="80">
+  Minimum character width for the diff viewer in side-by-side layout. Below this width, Monocle switches to stacked layout.
+</ParamField>
+
+<ParamField body="mouse" type="boolean" default="true">
+  Enable mouse interactions — click to focus panes, scroll with the wheel, click files to select, drag for visual selections, and interact with modal controls.
+</ParamField>
+
+<ParamField body="auto_focus_mode" type="boolean" default="false">
+  Automatically enter focus mode (hide sidebar, enable line wrap) when reviewing plans submitted via `monocle review send-artifact`.
+</ParamField>
+
+<ParamField body="keybindings" type="object" default="{}">
+  Custom key overrides. Map action names to key strings. See [Custom keybindings](#custom-keybindings) below.
+</ParamField>
+
+### review_format
+
+<ParamField body="review_format.include_snippets" type="boolean" default="true">
+  Include code snippets in the formatted review text delivered to the agent.
+</ParamField>
+
+<ParamField body="review_format.max_snippet_lines" type="integer" default="10">
+  Truncate code snippets longer than this number of lines in the formatted review.
+</ParamField>
+
+<ParamField body="review_format.include_summary" type="boolean" default="true">
+  Include a comment count summary (e.g. "2 issues, 1 suggestion") at the end of the formatted review.
+</ParamField>
+
+## Custom keybindings
+
+Override any action key by mapping the action name to a new key string in the `keybindings` object:
+
+```json
+{
+  "keybindings": {
+    "quit": "Q",
+    "submit": "ctrl+s",
+    "scroll_down": "ctrl+j"
+  }
+}
+```
+
+<Note>
+  Toggle keybindings (`T`, `t`, `w`, `f`) change settings for the current session only. Edit the config file to persist your preferences.
+</Note>
+
+<Note>
+  Modal keys (Enter, Esc, Tab in overlays) are not configurable.
+</Note>
+
+### Available action names
+
+<Accordion title="All configurable action names">
+| Action | Default key | Description |
+|--------|-------------|-------------|
+| `up` | `k` | Move up |
+| `down` | `j` | Move down |
+| `top` | `g` | Jump to top |
+| `bottom` | `G` | Jump to bottom |
+| `half_up` | `ctrl+u` | Scroll half page up |
+| `half_down` | `ctrl+d` | Scroll half page down |
+| `prev_file` | `[` | Previous file |
+| `next_file` | `]` | Next file |
+| `prev_section` | `{` | Previous sidebar section |
+| `next_section` | `}` | Next sidebar section |
+| `select` | `Enter` | Focus diff pane / toggle directory |
+| `focus_swap` | `Tab` | Switch pane focus |
+| `toggle_sidebar` | `\` | Toggle sidebar visibility |
+| `scroll_down` | `J` | Scroll diff down |
+| `scroll_up` | `K` | Scroll diff up |
+| `scroll_left` | `h` | Scroll diff left |
+| `scroll_right` | `l` | Scroll diff right |
+| `scroll_home` | `0` | Scroll to column 0 |
+| `scroll_first_char` | `^` | Scroll to first non-space |
+| `scroll_end` | `$` | Scroll to line end |
+| `wrap` | `w` | Toggle line wrapping |
+| `toggle_diff` | `t` | Cycle diff style |
+| `tree_mode` | `f` | Toggle flat/tree view |
+| `collapse_all` | `z` | Collapse all (tree) |
+| `expand_all` | `e` | Expand all (tree) |
+| `comment` | `c` | Add/edit comment at cursor |
+| `file_comment` | `C` | Add file-level comment |
+| `suggest` | `s` | Suggest edit at cursor |
+| `visual` | `v` | Visual select (multi-line) |
+| `reviewed` | `r` | Toggle file reviewed |
+| `submit` | `S` | Submit review |
+| `pause` | `P` | Pause the agent |
+| `dismiss_outdated` | — | Dismiss outdated comments |
+| `base_ref` | `b` | Change base ref |
+| `cycle_layout` | `T` | Cycle layout |
+| `refresh` | `R` | Force reload files |
+| `help` | `?` | Show all keybindings |
+| `quit` | `q` | Quit |
+| `command_mode` | `:` | Enter command mode |
+</Accordion>
+
+## Environment variables
+
+<ParamField body="MONOCLE_SOCKET" type="string">
+  Override the Unix socket path used to connect to a running Monocle session. Useful when the agent's working directory differs from Monocle's. Set this in your agent's environment or pass `--socket` on the CLI.
+</ParamField>
+
+<ParamField body="XDG_CONFIG_HOME" type="string">
+  Override the base directory for the global config file. Defaults to `~/.config`. The global config is read from `$XDG_CONFIG_HOME/monocle/config.json`.
+</ParamField>

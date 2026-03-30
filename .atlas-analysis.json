@@ -1,0 +1,68 @@
+{
+  "projectType": "cli-tool",
+  "projectName": "Monocle",
+  "projectDescription": "A terminal UI that lets developers review AI agent-written code in real time — leaving line-level comments on diffs, submitting structured feedback, and watching the agent fix things immediately.",
+  "theme": "luma",
+  "primaryColor": "#dc7454",
+  "lightColor": null,
+  "darkColor": null,
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/review-loop",
+              "guides/plan-review",
+              "guides/agent-integration",
+              "guides/configuration"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "reference/cli",
+              "reference/keybindings",
+              "reference/skills",
+              "reference/configuration"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Live diff viewer with unified and split (side-by-side) views, syntax highlighting, and intra-line diffs",
+    "Line-level structured comments tagged as issues, suggestions, notes, or praise",
+    "Plan & architecture review — agents can submit plans for human review before writing code",
+    "Push notifications via MCP channels (Claude Code) so feedback reaches the agent instantly",
+    "Pull-based feedback queue for agents without channel support (OpenCode, Codex CLI, Gemini CLI)",
+    "Pause flow — pause the agent mid-task to review before it proceeds",
+    "Suggested edits using GitHub-style suggestion blocks",
+    "Visual selection (vim-style) for multi-line comments",
+    "Session persistence via SQLite, including submission history",
+    "Configurable keybindings and per-project config override"
+  ],
+  "publicApiSurface": [
+    "monocle (start review session)",
+    "monocle register [agent] [--global]",
+    "monocle unregister [agent] [--global]",
+    "monocle review status [--json]",
+    "monocle review get-feedback [--wait] [--json]",
+    "monocle review send-artifact --title T [--file F] [--id ID] [--type EXT] [--wait] [--json]",
+    "monocle review add-files <paths...> [--json]",
+    "/get-feedback skill",
+    "/review-plan skill",
+    "/review-plan-wait skill"
+  ]
+}

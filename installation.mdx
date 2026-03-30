@@ -1,0 +1,95 @@
+---
+title: "Installation"
+description: "Install Monocle via Homebrew, pre-built binaries, or build from source."
+---
+
+## Requirements
+
+- A coding agent: [Claude Code](https://claude.com/claude-code), [OpenCode](https://opencode.ai), [Codex CLI](https://github.com/openai/codex), or [Gemini CLI](https://github.com/google/gemini-cli)
+- A terminal with 256-color or true color support
+- A JavaScript runtime ([Bun](https://bun.sh), [Deno](https://deno.com), or [Node.js](https://nodejs.org)) — required only for Claude Code push notifications
+- A [Nerd Font](https://www.nerdfonts.com/) — optional, but recommended for file icons
+
+## Homebrew (recommended)
+
+The fastest way to install Monocle on macOS or Linux:
+
+```bash
+brew install josephschmitt/tap/monocle
+```
+
+Homebrew handles updates automatically with `brew upgrade monocle`.
+
+## Pre-built binaries
+
+Download the binary for your platform from [GitHub Releases](https://github.com/josephschmitt/monocle/releases), extract it, and move it to a directory on your `PATH`.
+
+<CodeGroup>
+
+```bash macOS (Apple Silicon)
+curl -Lo monocle.tar.gz https://github.com/josephschmitt/monocle/releases/download/v0.38.0/monocle_darwin_arm64.tar.gz
+tar xzf monocle.tar.gz
+sudo mv monocle /usr/local/bin/
+```
+
+```bash macOS (Intel)
+curl -Lo monocle.tar.gz https://github.com/josephschmitt/monocle/releases/download/v0.38.0/monocle_darwin_amd64.tar.gz
+tar xzf monocle.tar.gz
+sudo mv monocle /usr/local/bin/
+```
+
+```bash Linux (x86_64)
+curl -Lo monocle.tar.gz https://github.com/josephschmitt/monocle/releases/download/v0.38.0/monocle_linux_amd64.tar.gz
+tar xzf monocle.tar.gz
+sudo mv monocle /usr/local/bin/
+```
+
+```bash Linux (ARM64)
+curl -Lo monocle.tar.gz https://github.com/josephschmitt/monocle/releases/download/v0.38.0/monocle_linux_arm64.tar.gz
+tar xzf monocle.tar.gz
+sudo mv monocle /usr/local/bin/
+```
+
+</CodeGroup>
+
+## Build from source
+
+If you prefer to build Monocle yourself, you'll need [devbox](https://www.jetpack.io/devbox) to set up the Go environment:
+
+```bash
+git clone https://github.com/josephschmitt/monocle.git
+cd monocle
+devbox run -- make build
+```
+
+The compiled binary is placed in `bin/`. Copy it to a directory on your `PATH`:
+
+```bash
+sudo cp bin/monocle /usr/local/bin/
+```
+
+## Verify the installation
+
+Confirm Monocle is installed and on your `PATH`:
+
+```bash
+monocle --version
+```
+
+You should see the installed version number printed to the terminal.
+
+## The `--global` flag
+
+Many Monocle commands accept a `--global` flag. Without it, Monocle writes configuration (skills, MCP channel config) into the current project directory — for example, `.claude/skills/` in your repo. With `--global`, it writes to your user-level config directory instead, so the same configuration applies across all your projects.
+
+<Note>
+  Project-level configuration takes precedence over global configuration. Register Monocle globally with `monocle register --global` if you want it available in every project without running `monocle register` per repo.
+</Note>
+
+## Next steps
+
+Once Monocle is installed, register it with your agent and start a review session:
+
+<Card title="Quickstart" icon="rocket" href="/quickstart">
+  Register Monocle with your agent and run your first live review in minutes.
+</Card>

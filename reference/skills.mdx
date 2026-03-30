@@ -1,0 +1,156 @@
+---
+title: "Skills reference"
+description: "Reference for all Monocle skills — what they do, which agents support them, and how they work under the hood."
+keywords: ["skills", "agentskills", "get-feedback", "review-plan", "review-plan-wait", "SKILL.md", "agent integration"]
+---
+
+Monocle ships standardized `SKILL.md` files in the [agentskills.io](https://agentskills.io) format. These files are embedded in the Monocle binary and installed into agent-specific directories when you run `monocle register`. Skills instruct agents to call `monocle review ...` CLI commands at the right times.
+
+## Skills overview
+
+| Skill | Available for | Description |
+|---|---|---|
+| `/get-feedback` | Claude Code, OpenCode, Codex CLI, Gemini CLI | Retrieve pending review feedback from the queue |
+| `/get-feedback-wait` | Claude Code, OpenCode, Codex CLI, Gemini CLI | Block until the reviewer submits feedback, then act on it |
+| `/review-plan` | Claude Code, OpenCode, Codex CLI, Gemini CLI | Find the active plan file and submit it for review — returns immediately |
+| `/review-plan-wait` | Claude Code, OpenCode, Codex CLI, Gemini CLI | Find the active plan file, submit for review, and iterate until approved |
+
+## Where skills are installed
+
+`monocle register` installs skills into the agent's skills directory for the current project. Use `--global` to install into the user-level config directory instead.
+
+| Agent | Project skills directory | Global skills directory |
+|---|---|---|
+| Claude Code | `.claude/skills/` | `~/.claude/skills/` |
+| OpenCode | `.opencode/skills/` | `~/.config/opencode/skills/` |
+| Codex CLI | `.codex/skills/` | `~/.codex/skills/` |
+| Gemini CLI | `.gemini/skills/` | `~/.gemini/skills/` |
+
+---
+
+## Skill details
+
+### `/get-feedback`
+
+Retrieves pending review feedback from Monocle. Use this after the reviewer has submitted feedback through the TUI, or after receiving a `feedback_submitted` push notification.
+
+**Underlying command:**
+
+```bash
+monocle review get-feedback
+```
+
+**Agent behavior:**
+
+- If feedback is available, the agent reads it carefully and acts on the reviewer's comments, issues, and suggestions.
+- If no feedback is pending, the agent informs you that no review is available yet.
+- If the command fails because Monocle is not running, the agent tells you to start Monocle with `monocle` in the project directory.
+
+---
+
+### `/get-feedback-wait`
+
+Blocks until the reviewer submits feedback through Monocle, then acts on it. Use when a pause has been requested, or when the agent should wait for reviewer approval before continuing.
+
+**Underlying command:**
+
+```bash
+monocle review get-feedback --wait
+```
+
+**Agent behavior:**
+
+- The agent blocks on the command until you submit a review.
+- After receiving feedback, the agent addresses the comments in your code.
+- If you requested changes, the agent runs `monocle review get-feedback --wait` again after making updates, and keeps iterating until you approve.
+
+---
+
+### `/review-plan`
+
+Finds the active plan file in the project and submits it to Monocle for the reviewer to see. Returns immediately — does not wait for feedback. Use `/review-plan-wait` if you need the agent to block until you respond.
+
+<Note>
+  This skill is for content that isn't already a tracked file change — plans, architecture docs, summaries, etc. Monocle automatically picks up code file changes in the workspace. You do not need to send those.
+</Note>
+
+**Underlying command:**
+
+```bash
+monocle review send-artifact \
+  --title "<first heading or filename>" \
+  --file <absolute path to plan> \
+  --id <plan filename> \
+  --type md
+```
+
+**Agent steps:**
+
+1. Find the plan file — uses the path from `$ARGUMENTS` if provided, otherwise finds the most recently modified plan file in the project.
+2. Read the file to confirm it exists and extract its filename.
+3. Run `monocle review send-artifact` with the title set to the first markdown heading (or the filename if no heading is found). The `--id` is set to the plan filename so that re-submissions replace the previous version rather than creating duplicates.
+4. Confirm to you that the plan was sent to Monocle.
+
+---
+
+### `/review-plan-wait`
+
+Finds the active plan file, submits it to Monocle, and blocks until the reviewer responds with feedback. If you request changes, the agent updates the plan and resubmits — iterating across as many rounds as it takes until you approve.
+
+**Underlying command:**
+
+```bash
+monocle review send-artifact \
+  --title "<first heading or filename>" \
+  --file <absolute path to plan> \
+  --id <plan filename> \
+  --type md \
+  --wait
+```
+
+**Agent steps:**
+
+1. Find the plan file (same logic as `/review-plan`).
+2. Read the file to confirm it exists.
+3. Run `monocle review send-artifact --wait` — this submits the artifact and then blocks until you submit a review.
+4. Handle the response:
+   - If you approved with no comments, the agent informs you and continues.
+   - If you provided feedback requesting changes, the agent shares the feedback with you, updates the plan, and re-runs `monocle review send-artifact --wait`.
+   - The agent keeps iterating until you approve.
+
+---
+
+## How skills work
+
+Each skill is a `SKILL.md` file that describes when and how to call `monocle review` CLI commands. When an agent encounters a skill invocation (e.g. `/review-plan`), it reads the skill file and follows the steps — which ultimately call `monocle review ...` to communicate with the running Monocle TUI over a Unix socket.
+
+Skills are wrappers for convenience. Agents can also call `monocle review ...` commands directly without using a skill — for example, adding `monocle review get-feedback` to a step in a custom agent prompt.
+
+## Triggering skills manually
+
+You can invoke `/review-plan` and `/review-plan-wait` yourself at any time by typing the skill name in your agent's chat interface. This is useful when you want to send the agent's current plan for review without waiting for the agent to do it on its own.
+
+<Tip>
+  To make the agent automatically submit plans for review, add instructions to your project's agent config file (e.g. `CLAUDE.md`, `AGENTS.md`). See [Agent integration](/guides/agent-integration) for a suggested prompt.
+</Tip>
+
+## Skills vs direct CLI
+
+| | Skills | Direct CLI |
+|---|---|---|
+| How invoked | Agent reads `SKILL.md` and follows steps | Agent calls `monocle review ...` in a shell step |
+| Setup required | `monocle register` | None — any agent with shell access works |
+| Best for | Agents with skill support | Custom prompts, scripts, or agents without skill systems |
+
+Both approaches call the same underlying `monocle review ...` commands and connect to the same Unix socket.
+
+---
+
+<CardGroup cols={2}>
+  <Card title="CLI reference" icon="terminal" href="/reference/cli">
+    Full reference for all `monocle review` commands used by skills.
+  </Card>
+  <Card title="Agent integration" icon="plug" href="/guides/agent-integration">
+    How to register Monocle with your agent and configure automatic reviews.
+  </Card>
+</CardGroup>

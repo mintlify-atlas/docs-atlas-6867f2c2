@@ -1,0 +1,275 @@
+---
+title: "CLI reference"
+description: "Complete reference for every Monocle command, subcommand, and flag."
+keywords: ["cli", "commands", "flags", "monocle run", "monocle register", "monocle review", "socket"]
+---
+
+Monocle is a single binary with subcommands for starting the TUI, registering with agents, and interacting with a running review session. Agent-facing commands live under `monocle review`.
+
+## User commands
+
+### `monocle` / `monocle run`
+
+Start a review session. Opens the TUI in the current terminal.
+
+```bash
+monocle
+monocle run
+```
+
+<ParamField path="--socket" type="string" default="">
+  Override the Unix socket path used for the MCP channel connection. Use this when auto-pairing fails because the agent's working directory differs from Monocle's. Also reads from the `MONOCLE_SOCKET` environment variable.
+
+  ```bash
+  monocle --socket /tmp/monocle-abc123.sock
+  ```
+</ParamField>
+
+<ParamField path="--additional-path / -a" type="string">
+  Add a file or directory to the review session. Repeatable — pass the flag multiple times to include several paths.
+
+  ```bash
+  monocle -a ./src -a ./lib
+  ```
+</ParamField>
+
+<ParamField path="--continue / -c" type="boolean" default="false">
+  Resume the most recent session for this repository without showing a picker. Mutually exclusive with `--resume` and `--session`.
+</ParamField>
+
+<ParamField path="--resume / -r" type="boolean" default="false">
+  Show an interactive session picker to choose which previous session to resume. Mutually exclusive with `--continue` and `--session`.
+</ParamField>
+
+<ParamField path="--session / -s" type="string" default="">
+  Resume a specific session by its ID. Mutually exclusive with `--continue` and `--resume`.
+
+  ```bash
+  monocle --session 01J8VWXYZ
+  ```
+</ParamField>
+
+<ParamField path="--version" type="boolean">
+  Print the installed version and exit.
+
+  ```bash
+  monocle --version
+  ```
+</ParamField>
+
+---
+
+### `monocle register`
+
+Install Monocle's skills for one or more agents. For Claude Code, also installs the MCP channel config for push notifications.
+
+```bash
+monocle register              # interactive agent picker
+monocle register claude       # install for Claude Code only
+monocle register opencode
+monocle register codex
+monocle register gemini
+monocle register all          # install for all supported agents
+```
+
+<ParamField path="agent" type="string">
+  The agent to register. One of `claude`, `opencode`, `codex`, `gemini`, or `all`. If omitted, an interactive picker lets you choose which agents to register.
+</ParamField>
+
+<ParamField path="--global" type="boolean" default="false">
+  Write to the user-level config directory instead of the current project directory. Use this when you want skills available across all projects rather than just the current one.
+</ParamField>
+
+Skills are installed in agent-specific directories:
+
+| Agent | Skills directory | MCP config |
+|---|---|---|
+| Claude Code | `.claude/skills/` | `.mcp.json` |
+| OpenCode | `.opencode/skills/` | — |
+| Codex CLI | `.codex/skills/` | — |
+| Gemini CLI | `.gemini/skills/` | — |
+
+---
+
+### `monocle unregister`
+
+Remove Monocle's skills and MCP config for one or more agents.
+
+```bash
+monocle unregister              # interactive agent picker
+monocle unregister claude
+monocle unregister all
+```
+
+<ParamField path="agent" type="string">
+  The agent to unregister. One of `claude`, `opencode`, `codex`, `gemini`, or `all`. If omitted, an interactive picker lets you choose.
+</ParamField>
+
+<ParamField path="--global" type="boolean" default="false">
+  Remove from the user-level config directory instead of the current project directory.
+</ParamField>
+
+---
+
+## Agent-facing commands
+
+These commands are used by agents (via skills or directly) to interact with a running Monocle session. Each command connects to Monocle's Unix socket, sends a request, prints the response, and exits.
+
+<Note>
+  All agent-facing commands accept `--socket PATH` or read the socket path from the `MONOCLE_SOCKET` environment variable. If Monocle is not running, the command exits with a non-zero status and prints an error to stderr.
+</Note>
+
+### `monocle review status`
+
+Check the current review status — whether feedback is pending or a pause has been requested.
+
+```bash
+monocle review status
+monocle review status --json
+MONOCLE_SOCKET=/tmp/monocle-abc123.sock monocle review status
+```
+
+<ParamField path="--socket" type="string" default="">
+  Override socket path. Also reads from `MONOCLE_SOCKET`.
+</ParamField>
+
+<ParamField path="--json" type="boolean" default="false">
+  Output the status as structured JSON instead of plain text.
+</ParamField>
+
+---
+
+### `monocle review get-feedback`
+
+Retrieve pending review feedback from the queue. If multiple reviews have accumulated, they are all delivered together in one response.
+
+```bash
+monocle review get-feedback
+monocle review get-feedback --wait
+monocle review get-feedback --json
+```
+
+<ParamField path="--socket" type="string" default="">
+  Override socket path. Also reads from `MONOCLE_SOCKET`.
+</ParamField>
+
+<ParamField path="--wait" type="boolean" default="false">
+  Block until feedback is available instead of returning immediately. Used by the `/get-feedback-wait` skill and the pause flow — the command holds the connection open until the reviewer submits a review.
+</ParamField>
+
+<ParamField path="--json" type="boolean" default="false">
+  Output feedback as structured JSON.
+</ParamField>
+
+---
+
+### `monocle review send-artifact`
+
+Send content (a plan, architecture doc, summary, or any text) to Monocle for the reviewer to see. Content appears alongside file diffs in the sidebar and supports line-level comments.
+
+Reads content from `--file` or from stdin if `--file` is not provided.
+
+```bash
+# Send a file
+monocle review send-artifact --title "Sprint plan" --file ./plan.md --id plan.md --type md
+
+# Send from stdin
+cat plan.md | monocle review send-artifact --title "Sprint plan" --id plan.md --type md
+
+# Send and block until reviewer responds
+monocle review send-artifact --title "Sprint plan" --file ./plan.md --id plan.md --type md --wait
+```
+
+<ParamField path="--title" type="string" required>
+  Title for the content as displayed in Monocle's sidebar. Required.
+</ParamField>
+
+<ParamField path="--file" type="string" default="">
+  Path to the file to submit. If omitted, content is read from stdin.
+</ParamField>
+
+<ParamField path="--id" type="string" default="">
+  Identifier for the content. When you send an update with the same `--id`, it replaces the previous version in the sidebar rather than creating a duplicate. Defaults to the basename of `--file` if not set.
+</ParamField>
+
+<ParamField path="--type" type="string" default="">
+  File extension for syntax highlighting (e.g. `md`, `go`, `py`, `ts`). Monocle uses this to render the content with the correct language highlight.
+</ParamField>
+
+<ParamField path="--wait" type="boolean" default="false">
+  Block until the reviewer responds with feedback. Used by the `/review-plan-wait` skill. The command submits the artifact, then opens a second connection and waits for the next submitted review.
+</ParamField>
+
+<ParamField path="--json" type="boolean" default="false">
+  Output the response as structured JSON.
+</ParamField>
+
+<ParamField path="--socket" type="string" default="">
+  Override socket path. Also reads from `MONOCLE_SOCKET`.
+</ParamField>
+
+---
+
+### `monocle review add-files`
+
+Add one or more file or directory paths to the current review session. Useful for including files that Monocle didn't pick up automatically.
+
+```bash
+monocle review add-files ./src/feature.go
+monocle review add-files ./src ./lib ./docs
+```
+
+<ParamField path="paths" type="string[]" required>
+  One or more file or directory paths to add. Paths are resolved to absolute paths before being sent to Monocle.
+</ParamField>
+
+<ParamField path="--socket" type="string" default="">
+  Override socket path. Also reads from `MONOCLE_SOCKET`.
+</ParamField>
+
+<ParamField path="--json" type="boolean" default="false">
+  Output the response as structured JSON.
+</ParamField>
+
+---
+
+## Socket override
+
+Monocle auto-pairs with agents using a socket path derived from the working directory. If auto-pairing fails (for example, because the agent runs in a different directory), override the socket path explicitly:
+
+<CodeGroup>
+
+```bash TUI startup
+monocle --socket /tmp/monocle-abc123.sock
+```
+
+```bash Agent commands
+MONOCLE_SOCKET=/tmp/monocle-abc123.sock monocle review status
+```
+
+```json MCP config (Claude Code)
+{
+  "mcpServers": {
+    "monocle": {
+      "env": {
+        "MONOCLE_SOCKET": "/tmp/monocle-abc123.sock"
+      }
+    }
+  }
+}
+```
+
+</CodeGroup>
+
+Press **`I`** in the TUI to see the current socket path and how many agents are connected.
+
+---
+
+<CardGroup cols={2}>
+  <Card title="Keybindings" icon="keyboard" href="/reference/keybindings">
+    Complete reference for all TUI keybindings.
+  </Card>
+  <Card title="Configuration" icon="sliders" href="/reference/configuration">
+    Full config schema with all options and defaults.
+  </Card>
+</CardGroup>
